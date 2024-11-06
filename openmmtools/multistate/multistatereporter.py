@@ -771,9 +771,18 @@ class MultiStateReporter(object):
 
         # Retrieve all moves in order.
         mcmc_moves = list()
+        serialized_move = None
         for move_id in range(n_moves):
-            serialized_move = self.read_dict('mcmc_moves/move{}'.format(move_id))
-            mcmc_moves.append(deserialize(serialized_move))
+            try:
+                serialized_move = self.read_dict('mcmc_moves/move{}'.format(move_id))
+                break
+            except RuntimeError as e:
+                print(e)
+
+        serialized_move = deserialize(serialized_move)
+        for move_id in range(n_moves):
+            mcmc_moves.append(serialized_move)
+
         return mcmc_moves
 
     def write_mcmc_moves(self, mcmc_moves):
