@@ -543,6 +543,8 @@ class PhaseAnalyzer(ABC):
         """
         # Arguments validation.
         if not type(reporter) is multistate.MultiStateReporter:
+        # print("Reporter is - ", type(reporter))
+        # if not type(reporter) is MultiStateReporter:
             raise ValueError('reporter must be a MultiStateReporter instance')
         if not isinstance(registry, ObservablesRegistry):
             raise ValueError("Registry must be an instanced ObservablesRegistry")

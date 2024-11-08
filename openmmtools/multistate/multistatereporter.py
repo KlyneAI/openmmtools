@@ -1729,6 +1729,11 @@ class MultiStateReporter(object):
         read_iteration = self._map_iteration_to_good(iteration)
         if obey_checkpoint_interval:
             read_iteration = self._calculate_checkpoint_iteration(iteration)
+            try:
+                x = storage.variables['positions'][read_iteration, 0, :, :].astype(np.float64)
+            except IndexError:
+                read_iteration -= 1
+
         if read_iteration is not None:
             # TODO: Restore n_replicas instead
             n_replicas = storage.dimensions['replica'].size

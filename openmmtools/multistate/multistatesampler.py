@@ -30,6 +30,7 @@ This code is licensed under the latest available version of the MIT License.
 
 import os
 import copy
+import shutil
 import time
 import typing
 import inspect
@@ -45,12 +46,13 @@ try:
 except ImportError:  # OpenMM < 7.6
     from simtk import unit, openmm
 
-from openmmtools import multistate, utils, states, mcmc, cache
+from openmmtools import utils, states, mcmc, cache
 import mpiplus
 from openmmtools.multistate.utils import SimulationNaNError
 from openmmtools.multistate.pymbar import ParameterError
 
 from openmmtools.integrators import FIREMinimizationIntegrator
+from klyne_multistatereporter import MultiStateReporter
 
 logger = logging.getLogger(__name__)
 
@@ -808,6 +810,18 @@ class MultiStateSampler(object):
             # Perform sanity checks to see if we should terminate here.
             self._check_nan_energy()
 
+            # Copy a backup of storage files every checkpoint interval
+            if self._reporter._calculate_checkpoint_iteration(self._iteration) is not None:
+                logger.info(f"Current iteration={self._iteration}, making a backup of storage files ...")
+                self._reporter.close()
+                for storage_file in self._reporter._storage_paths:
+                    backup_file = f"{storage_file}.BAK"
+                    logger.info(f"\tCopying file {storage_file} to {backup_file} ...")
+                    shutil.copy(storage_file, backup_file)
+
+                mpiplus.run_single_node(0, self._reporter.open, mode='a',
+                                        broadcast_result=False, sync_nodes=False)
+
     def extend(self, n_iterations):
         """Extend the simulation by the given number of iterations.
 
@@ -1161,8 +1175,11 @@ class MultiStateSampler(object):
         """
         if isinstance(storage, str):
             # Open a reporter to read the data.
-            reporter = multistate.MultiStateReporter(storage)
+            # reporter = multistate.MultiStateReporter(storage)
+            reporter = MultiStateReporter(storage)
         else:
+            # Ensure we don't have already another file
+            storage.close()
             reporter = storage
 
         # Check if netcdf file exists.
@@ -1517,6 +1534,7 @@ class MultiStateSampler(object):
         # MultiStateSampler to crash as neither of them are the __main__ package.
         # https://stackoverflow.com/questions/6351805/cyclic-module-dependencies-and-relative-imports-in-python
         from openmmtools.multistate.multistateanalyzer import MultiStateSamplerAnalyzer
+        # from klyne_multistateanalyzer import MultiStateSamplerAnalyzer
 
         # Start the analysis
         bump_error_counter = False
