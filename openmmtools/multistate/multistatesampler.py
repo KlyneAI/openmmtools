@@ -46,13 +46,13 @@ try:
 except ImportError:  # OpenMM < 7.6
     from simtk import unit, openmm
 
-from openmmtools import utils, states, mcmc, cache
+from openmmtools import multistate, utils, states, mcmc, cache
 import mpiplus
 from openmmtools.multistate.utils import SimulationNaNError
 from openmmtools.multistate.pymbar import ParameterError
 
 from openmmtools.integrators import FIREMinimizationIntegrator
-from klyne_multistatereporter import MultiStateReporter
+# from klyne_multistatereporter import MultiStateReporter
 
 logger = logging.getLogger(__name__)
 
@@ -1175,8 +1175,8 @@ class MultiStateSampler(object):
         """
         if isinstance(storage, str):
             # Open a reporter to read the data.
-            # reporter = multistate.MultiStateReporter(storage)
-            reporter = MultiStateReporter(storage)
+            reporter = multistate.MultiStateReporter(storage)
+            # reporter = MultiStateReporter(storage)
         else:
             # Ensure we don't have already another file
             storage.close()
