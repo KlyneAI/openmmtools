@@ -811,7 +811,7 @@ class MultiStateSampler(object):
             self._check_nan_energy()
 
             # Copy a backup of storage files every checkpoint interval
-            if self._reporter._calculate_checkpoint_iteration(self._iteration) is not None:
+            if self._reporter._calculate_checkpoint_iteration(self._iteration) is not None or self._iteration == 1:
                 logger.info(f"Current iteration={self._iteration}, making a backup of storage files ...")
                 self._reporter.close()
                 for storage_file in self._reporter._storage_paths:
