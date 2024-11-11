@@ -769,6 +769,10 @@ class MultiStateSampler(object):
         else:
             iteration_limit = min(self._iteration + n_iterations, self.number_of_iterations)
 
+        # Close reporter if it's open before starting simulation
+        if self._reporter.is_open():
+            self._reporter.close()
+
         # Main loop.
         while not self._is_completed(iteration_limit):
             # Increment iteration counter.
@@ -788,11 +792,20 @@ class MultiStateSampler(object):
             # Compute energies of all replicas at all states
             self._compute_energies()
 
-            # Write iteration to storage file
+            # Open reporter and close after for `report_iteration` and `update_analysis`
+            # --------------------------------------------------------------------------- #
+            # Write iteration to storage file - need reporter open
+            mpiplus.run_single_node(0, self._reporter.open, mode='a',
+                                    broadcast_result=False, sync_nodes=False)
             self._report_iteration()
+            self._reporter.close()
 
-            # Update analysis
+            # Update analysis - need reporter open
+            mpiplus.run_single_node(0, self._reporter.open, mode='a',
+                                    broadcast_result=False, sync_nodes=False)
             self._update_analysis()
+            self._reporter.close()
+            # --------------------------------------------------------------------------- #
 
             # Computing and transmitting timing information
             iteration_time = timer.stop('Iteration')
