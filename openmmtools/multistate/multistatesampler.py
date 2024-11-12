@@ -773,6 +773,8 @@ class MultiStateSampler(object):
         if self._reporter.is_open():
             self._reporter.close()
 
+        second_backup = 0
+
         # Main loop.
         while not self._is_completed(iteration_limit):
             # Increment iteration counter.
@@ -831,6 +833,17 @@ class MultiStateSampler(object):
                     backup_file = f"{storage_file}.BAK"
                     logger.info(f"\tCopying file {storage_file} to {backup_file} ...")
                     shutil.copy(storage_file, backup_file)
+
+                second_backup += 1
+
+                # Create a secondary backup
+                if second_backup == 5 or self._iteration == 1:
+                    for storage_file in self._reporter._storage_paths:
+                        backup_file = f"{storage_file}.BAK1"
+                        logger.info(f"\tCopying a secondary backup file {storage_file} to {backup_file} ...")
+                        shutil.copy(storage_file, backup_file)
+
+                    second_backup = 0
 
                 mpiplus.run_single_node(0, self._reporter.open, mode='a',
                                         broadcast_result=False, sync_nodes=False)
