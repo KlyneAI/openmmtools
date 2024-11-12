@@ -837,7 +837,7 @@ class MultiStateSampler(object):
                 second_backup += 1
 
                 # Create a secondary backup
-                if second_backup == 5 or self._iteration == 1:
+                if second_backup == 10 or self._iteration == 1:
                     for storage_file in self._reporter._storage_paths:
                         backup_file = f"{storage_file}.BAK1"
                         logger.info(f"\tCopying a secondary backup file {storage_file} to {backup_file} ...")
